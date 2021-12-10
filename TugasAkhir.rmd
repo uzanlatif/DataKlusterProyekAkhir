@@ -1,0 +1,141 @@
+---
+title: "Praktikum Data Science-(A)"
+author: "<Kelompok 3>"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r }
+library(vroom)
+library(tidymodels)
+library(tidytext)
+library(here)
+
+library(dslabs)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+
+df_data = read.csv("DFREV2.csv", header=TRUE, sep=",")
+```
+
+
+## Bagian 1 Show Dataset
+```{r }
+df_data
+```
+
+## Bagian 2 Data Preprocessing
+```{r }
+df_baru=df_data[,3:16]
+df_baru
+
+```
+## Bagian 3 Proses data menggunakan rata2 setiap kolom
+
+```{r }
+
+df_daerah = df_baru%>%group_by(Asal.Daerah)
+##df_daerah
+
+df_AverageUmur=df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgUmur=mean(Umur))
+df_AverageUmur
+df_KelasOnline=df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgKelasOnline=mean(Waktu.yang.dihabiskan.untuk.mengikuti.Kelas.Online))
+df_KelasOnline
+df_Belajar =df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgBelajarMandiri=mean(Waktu.yang.dihabiskan.untuk.Belajar.Sendiri))
+df_Belajar
+df_Olahraga = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgOlahraga=mean(Waktu.untuk.Berolahraga))
+df_Olahraga
+df_tidur = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgTidur=mean(Waktu.untuk.tidur))
+df_tidur
+df_Hobi = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgHobi=mean(Waktu.yang.diperlukan.untuk.melakukan.hobi))
+df_Hobi
+df_Sosmed = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgSosmed=mean(Waktu.untuk.membuka.social.media))
+df_Sosmed
+df_Pemahaman = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgPemahaman=mean(Pemahaman.Materi.selama.Kelas.Online))
+df_Pemahaman
+df_Tugas = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgTugas=mean(Jumlah.tugas.yang.diberikan.selama.Kelas.Online))
+df_Tugas
+df_TekananUjian = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgTekanan=mean(Tekanan.selama.mengikuti.Ujian.secara.online))
+df_TekananUjian
+df_semangat = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgSemangat=mean(Semangat.dalam.mengikuti.Kelas.Online))
+df_semangat
+df_TekananKelas = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgTekananKelas=mean(Tekanan.yang.dirasakan.selama.mengikuti.Kelas.Online))
+df_TekananKelas
+df_Interaksi = df_daerah%>%group_by(Asal.Daerah)%>%summarise(AvgInteraksi=mean(Banyaknya.interaksi.sosial.dengan.teman.atau.keluarga.selama.mengikuti.Kelas.Online))
+df_Interaksi
+```
+## Bagian 4 Menggabungkan tiap tiap Kolom menjadi satu data frame
+```{r }
+df_new=df_AverageUmur%>%
+  add_column(AvgOnline=df_KelasOnline$AvgKelasOnline)%>%
+  add_column(AvgBelajar=df_Belajar$AvgBelajarMandiri)%>%
+  add_column(AvgOlahraga=df_Olahraga$AvgOlahraga)%>%
+  add_column(AvgTidur=df_tidur$AvgTidur)%>%
+  add_column(AvgHobi=df_Hobi$AvgHobi)%>%
+  add_column(AvgSosMed=df_Sosmed$AvgSosmed)%>%
+  add_column(AvgPemahaman=df_Pemahaman$AvgPemahaman)%>%
+  add_column(AvgTugas=df_Tugas$AvgTugas)%>%
+  add_column(AvgTekananUjian=df_TekananUjian$AvgTekanan)%>%
+  add_column(AvgSemangat=df_semangat$AvgSemangat)%>%
+  add_column(AvgTekananKelas=df_TekananKelas$AvgTekananKelas)%>%
+  add_column(AvgInteraksi=df_Interaksi$AvgInteraksi)
+  
+df_new
+```
+## Bagian 5 Plot Data menggunakan ggplot hanya bisa mencangkup 2 variabel
+
+```{r }
+ggplot(df_new,aes(x=AvgUmur,y=Asal.Daerah))+geom_point();
+
+```
+##Bagian 6 karena ggplot hanya bisa menampilkan 2 variabel maka kita menggunakan Klustering
+
+```{r }
+library(dslabs)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+
+```
+
+##Bagian 7 show dataset 
+
+```{r }
+df_new
+
+```
+## Bagian 8 Mencari nilai K
+```{r }
+tablefix=scale(df_new[,2:14])
+##tablefix
+fviz_nbclust(tablefix,kmeans,method="wss") ##methode elbow titik siku
+fviz_nbclust(tablefix,kmeans) ##methode silhouette
+```
+## Bagian 9 Memunculkan Plot Klustering
+```{r }
+final=kmeans(tablefix,5)
+print(final)
+
+fviz_cluster(final,data=tablefix)
+final_akhir=data.frame(tablefix,final$cluster)
+view(final_akhir)
+```
+## Bagian 10 Memunculkan Nilai average Tiap2 Kluster
+```{r }
+df_new[,2:14]%>%
+  mutate(Cluster=final$cluster)%>%
+  group_by(Cluster)%>%
+  summarise_all("mean")
+
+```
